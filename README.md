@@ -1,0 +1,16 @@
+# Volly Superstars  (com.sano.volsu)
+Developer: Sano - Game voli 3D offline (Godot 4.2, GL Compatibility)
+
+## Cara build APK lewat GitHub
+1. Buat repo baru di GitHub, upload SEMUA isi folder ini (termasuk folder `.github`).
+2. Buka tab **Actions** > **Build Android APK** > tunggu selesai (sekitar 5-10 menit).
+3. Buka hasil run > bagian **Artifacts** > download **VollySuperstars-APK** > ekstrak > install `VollySuperstars.apk`.
+
+Build otomatis jalan tiap push ke branch main/master, atau klik **Run workflow** manual.
+APK yang dihasilkan adalah debug-signed (bisa langsung di-install).
+
+## Isi
+- 1000 pemain buatan (nama Indonesia/Jepang/Korea), 100 pemain bintang, 32 legend Haikyuu, 130 team
+- Kartu pemain, transfer (Available/Search/Save), shop pack, misi, daily reward, upgrade stats
+- Story 1-100, Tournament auto save, tutorial 20 langkah, musik + efek suara
+- `tools/gen_assets.py` = pembuat icon dan audio (opsional, aset sudah ada)
