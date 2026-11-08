@@ -47,7 +47,8 @@ func go(n: String) -> void:
 	cur = Control.new()
 	cur.set_anchors_preset(Control.PRESET_FULL_RECT)
 	ui.add_child(cur)
-	cur.add_child(G.mk_bg())
+	cur.add_child(MenuBG.new() if (n == "menu" or n == "create") else G.mk_bg())
+	G.play_amb(false)
 	G.play_music("bgm_menu")
 	call("_s_" + n)
 
@@ -218,12 +219,9 @@ func _s_menu() -> void:
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
 	mid.add_child(center)
-	var logo := TextureRect.new()
-	logo.texture = load("res://icons/logo.png")
-	logo.custom_minimum_size = Vector2(230, 230)
-	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	center.add_child(logo)
+	var mascot := Mascot2D.new()
+	mascot.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.add_child(mascot)
 	var tt := G.mk_label("VOLLY SUPERSTARS", 54, Color.html("#ffc43a"))
 	tt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(tt)

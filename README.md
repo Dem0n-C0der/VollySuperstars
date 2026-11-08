@@ -14,3 +14,9 @@ APK yang dihasilkan adalah debug-signed (bisa langsung di-install).
 - Kartu pemain, transfer (Available/Search/Save), shop pack, misi, daily reward, upgrade stats
 - Story 1-100, Tournament auto save, tutorial 20 langkah, musik + efek suara
 - `tools/gen_assets.py` = pembuat icon dan audio (opsional, aset sudah ada)
+
+## Update v2
+- Kamera dari atas (lapangan horizontal), penonton, wasit, maskot, pemain 3D dengan animasi halus
+- Bar timing + cincin penanda bola, tombol aksi selalu tampil
+- Tutorial: sentuh di mana saja berfungsi + pengaman anti-nyangkut
+- Menu utama dengan background animasi dan maskot

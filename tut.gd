@@ -31,6 +31,10 @@ var label: Label
 var panel: PanelContainer
 var t := 0.0
 var finishing := false
+var any_tap := false
+var wrong := 0
+var flash := 0.0
+var base_msg := ""
 
 func _ready() -> void:
 	G.tut = self
@@ -79,7 +83,10 @@ func _show(text: String, tname: String) -> void:
 			tries += 1
 	await get_tree().process_frame
 	msg = text
+	base_msg = text
 	label.text = text
+	any_tap = (tname == "court")
+	wrong = 0
 	target = G.targets.get(tname) if tname != "" and G.targets.has(tname) and is_instance_valid(G.targets[tname]) else null
 	if target != null:
 		hole = target.get_global_rect().grow(8.0)
@@ -97,6 +104,7 @@ func _show(text: String, tname: String) -> void:
 func _process(delta: float) -> void:
 	if visible:
 		t += delta
+		flash = maxf(0.0, flash - delta)
 		queue_redraw()
 
 func _draw() -> void:
@@ -110,7 +118,16 @@ func _draw() -> void:
 	draw_rect(Rect2(0, hole.position.y, hole.position.x, hole.size.y), dim)
 	draw_rect(Rect2(hole.end.x, hole.position.y, vs.x - hole.end.x, hole.size.y), dim)
 	var pulse := 0.5 + 0.5 * sin(t * 6.0)
-	draw_rect(hole, Color(1, 0.85, 0.2, 0.6 + 0.4 * pulse), false, 4.0 + 3.0 * pulse)
+	draw_rect(hole, Color(1, 0.85, 0.2, 0.6 + 0.4 * pulse) if flash <= 0.0 else Color(1, 0.3, 0.2, 1.0), false, 4.0 + 3.0 * pulse + flash * 10.0)
+
+func _forward(tg: Control, pos: Vector2) -> void:
+	visible = false
+	target = null
+	if tg.has_signal("tapped"):
+		tg.emit_signal("tapped", pos)
+	elif tg.has_signal("pressed"):
+		tg.emit_signal("pressed")
+	_advance()
 
 func _gui_input(e: InputEvent) -> void:
 	if not (e is InputEventMouseButton and e.pressed and e.button_index == MOUSE_BUTTON_LEFT):
@@ -123,15 +140,17 @@ func _gui_input(e: InputEvent) -> void:
 	if target == null:
 		_advance()
 		return
-	if hole.has_point(e.position):
-		var tg = target
-		visible = false
-		target = null
-		if tg.has_signal("tapped"):
-			tg.emit_signal("tapped", tg.get_global_rect().get_center())
-		elif tg.has_signal("pressed"):
-			tg.emit_signal("pressed")
-		_advance()
+	var tg = target
+	if any_tap:
+		_forward(tg, e.position)
+	elif hole.has_point(e.position):
+		_forward(tg, tg.get_global_rect().get_center())
+	else:
+		wrong += 1
+		flash = 0.5
+		label.text = base_msg + "\n(Touch the glowing area)"
+		if wrong >= 4:
+			_forward(tg, tg.get_global_rect().get_center())
 
 func _advance() -> void:
 	G.tut_i += 1

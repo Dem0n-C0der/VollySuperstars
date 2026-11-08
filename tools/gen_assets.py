@@ -15,7 +15,49 @@ def canvas():
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     return im, ImageDraw.Draw(im)
 
+BADGE = {
+    "transfer": (235, 130, 40), "setting": (90, 110, 170), "team": (50, 110, 245),
+    "story": (40, 150, 235), "tournament": (225, 70, 55), "shop": (150, 80, 215),
+    "mission": (45, 170, 95), "daily": (215, 70, 110), "back": (90, 100, 150),
+}
+
+def badge(glyph, col):
+    base = np.zeros((S, S, 4), dtype=np.float32)
+    yy, xx = np.mgrid[0:S, 0:S]
+    cx = cy = S / 2
+    r = S / 2 - 18
+    inside = ((xx - cx) ** 2 + (yy - cy) ** 2) <= r * r
+    t = np.clip((yy - (cy - r)) / (2 * r), 0, 1)
+    light = np.array(col, dtype=np.float32) * 1.25
+    dark = np.array(col, dtype=np.float32) * 0.62
+    for c in range(3):
+        base[..., c] = light[c] * (1 - t) + dark[c] * t
+    base[..., 3] = 255
+    base = np.clip(base, 0, 255)
+    base[~inside] = 0
+    img = Image.fromarray(base.astype(np.uint8), "RGBA")
+    out = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    sh = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).ellipse((cx - r + 6, cy - r + 22, cx + r + 6, cy + r + 22), fill=(0, 0, 0, 90))
+    out.alpha_composite(sh)
+    out.alpha_composite(img)
+    d = ImageDraw.Draw(out)
+    d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=(255, 255, 255, 120), width=10)
+    gl = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    ImageDraw.Draw(gl).ellipse((cx - r * 0.78, cy - r * 0.92, cx + r * 0.78, cy - r * 0.1), fill=(255, 255, 255, 62))
+    out.alpha_composite(gl)
+    g = glyph.resize((int(S * 0.6), int(S * 0.6)), Image.LANCZOS)
+    gs = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    gshadow = Image.new("RGBA", g.size, (0, 0, 0, 110))
+    gshadow.putalpha(g.split()[3].point(lambda v: int(v * 0.45)))
+    gs.alpha_composite(gshadow, (int(S * 0.2) + 6, int(S * 0.2) + 10))
+    out.alpha_composite(gs)
+    out.alpha_composite(g, (int(S * 0.2), int(S * 0.2)))
+    return out
+
 def save_icon(im, name, size=128):
+    if name in BADGE:
+        im = badge(im, BADGE[name])
     im.resize((size, size), Image.LANCZOS).save(os.path.join(ICON_DIR, name + ".png"))
 
 def font(sz):
@@ -404,7 +446,14 @@ def sfx_cheer():
     x = n * np.sin(np.pi * t / 1.6) ** 1.5 * (0.7 + 0.3 * np.sin(2 * np.pi * 7 * t))
     write_wav("cheer", x, 0.5)
 
-for fn in (music_menu, music_match, sfx_hit, sfx_pass, sfx_set, sfx_spike, sfx_whistle, sfx_point,
+def sfx_crowd():
+    n = 6.0
+    t = tarr(n)
+    x = lowpass(noise(n), 0.22) * (0.5 + 0.25 * np.sin(2 * np.pi * t / n * 2) + 0.15 * np.sin(2 * np.pi * t / n * 5))
+    x += 0.12 * np.sin(2 * np.pi * (230 + 8 * np.sin(2 * np.pi * t / n * 3)) * t) * (0.5 + 0.5 * np.sin(2 * np.pi * t / n * 3) ** 2)
+    write_wav("crowd", x, 0.5)
+
+for fn in (sfx_crowd, music_menu, music_match, sfx_hit, sfx_pass, sfx_set, sfx_spike, sfx_whistle, sfx_point,
            sfx_lose, sfx_click, sfx_coin, sfx_card, sfx_win, sfx_cheer):
     fn()
 print("assets ok")

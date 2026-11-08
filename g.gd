@@ -36,6 +36,7 @@ var tut_active := false
 var tut_i := 0
 
 var music: AudioStreamPlayer
+var amb: AudioStreamPlayer
 var sfx_pool: Array = []
 var sfx_i := 0
 var cache := {}
@@ -285,7 +286,7 @@ func plevel() -> int:
 
 # ------------------------------------------------------------------ save
 func default_save() -> Dictionary:
-	return {"name": "", "coins": 5000, "xp": 0, "owned": [], "lineup": [], "lv": {}, "story": 0, "tut": false,
+	return {"name": "", "coins": 1000, "xp": 0, "owned": [], "lineup": [], "lv": {}, "story": 0, "tut": false,
 		"mus": 0.7, "sfx": 0.9, "gfx": 2, "diff": 1, "day": 0, "streak": 0, "first": -1, "seed": 1, "hold": {},
 		"mis": {"day": 0, "win": 0, "score": 0, "spike": 0, "claim": []},
 		"ach": {"wins": 0, "claim": []}, "tour": {"active": false}}
@@ -425,6 +426,9 @@ func _setup_audio() -> void:
 	music = AudioStreamPlayer.new()
 	add_child(music)
 	music.finished.connect(func(): music.play())
+	amb = AudioStreamPlayer.new()
+	add_child(amb)
+	amb.finished.connect(func(): amb.play())
 	for i in 8:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
@@ -444,6 +448,15 @@ func play_music(n: String) -> void:
 	apply_volume()
 	if music.stream != null:
 		music.play()
+
+func play_amb(on: bool) -> void:
+	if on:
+		amb.stream = _snd("crowd")
+		amb.volume_db = linear_to_db(maxf(float(save["sfx"]) * 0.35, 0.001))
+		if amb.stream != null:
+			amb.play()
+	else:
+		amb.stop()
 
 func apply_volume() -> void:
 	music.volume_db = linear_to_db(maxf(float(save["mus"]), 0.001))
@@ -471,8 +484,12 @@ func mk_label(text: String, size := 24, col := Color.WHITE) -> Label:
 	l.add_theme_constant_override("outline_size", 4)
 	return l
 
-func mk_box(col: Color, radius := 16, border := Color(1, 1, 1, 0.15)) -> StyleBoxFlat:
+func mk_box(col: Color, radius := 16, border := Color(1, 1, 1, 0.15), shadow := false) -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
+	if shadow:
+		sb.shadow_color = Color(0, 0, 0, 0.45)
+		sb.shadow_size = 7
+		sb.shadow_offset = Vector2(0, 4)
 	sb.bg_color = col
 	sb.set_corner_radius_all(radius)
 	sb.border_color = border
@@ -495,17 +512,27 @@ func mk_btn(text: String, col := Color.html("#2b6cff"), size := Vector2(200, 64)
 	b.add_theme_font_size_override("font_size", fs)
 	b.add_theme_color_override("font_color", Color.WHITE)
 	b.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.4))
-	b.add_theme_stylebox_override("normal", mk_box(col, 16, col.lightened(0.3)))
-	b.add_theme_stylebox_override("hover", mk_box(col.lightened(0.1), 16, col.lightened(0.4)))
-	b.add_theme_stylebox_override("pressed", mk_box(col.darkened(0.25), 16, col.lightened(0.2)))
-	b.add_theme_stylebox_override("disabled", mk_box(col.darkened(0.55), 16, Color(1, 1, 1, 0.05)))
+	b.add_theme_stylebox_override("normal", mk_box(col, 26, col.lightened(0.45), true))
+	b.add_theme_stylebox_override("hover", mk_box(col.lightened(0.1), 26, col.lightened(0.55), true))
+	b.add_theme_stylebox_override("pressed", mk_box(col.darkened(0.2), 26, col.lightened(0.3)))
+	b.add_theme_stylebox_override("disabled", mk_box(col.darkened(0.55), 26, Color(1, 1, 1, 0.05)))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	if icon_name != "":
 		b.icon = load("res://icons/%s.png" % icon_name)
 		b.expand_icon = true
 		b.icon_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_constant_override("icon_max_width", int(size.y * 0.72))
+	b.resized.connect(func(): b.pivot_offset = b.size / 2.0)
+	b.button_down.connect(func(): _pop(b, 0.93))
+	b.button_up.connect(func(): _pop(b, 1.0))
 	b.pressed.connect(func(): sfx("click", 0.8))
 	return b
+
+func _pop(b: Control, s: float) -> void:
+	if not is_instance_valid(b):
+		return
+	var tw := b.create_tween()
+	tw.tween_property(b, "scale", Vector2(s, s), 0.08)
 
 func mk_bg() -> TextureRect:
 	var gt := GradientTexture2D.new()
