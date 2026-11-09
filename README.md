@@ -20,3 +20,9 @@ APK yang dihasilkan adalah debug-signed (bisa langsung di-install).
 - Bar timing + cincin penanda bola, tombol aksi selalu tampil
 - Tutorial: sentuh di mana saja berfungsi + pengaman anti-nyangkut
 - Menu utama dengan background animasi dan maskot
+
+## Update v3
+- Tutorial berdiri sendiri (layar terpisah, 20 langkah sentuh)
+- 1.132 portrait pemain detail di folder `faces/`, tekstur lapangan di `tex/`, maskot berlayer di `mascot/`
+- Musik: taruh `menu.mp3` dan `match.mp3` di `/sdcard/Download/VollyMusic/`, tools Termux ikut mengunggahnya
+  (atau taruh manual sebagai `audio/bgm_menu.mp3` dan `audio/bgm_match.mp3` di repo)

@@ -1,7 +1,7 @@
 # Generates icons + audio for Volly Superstars (run once: python3 tools/gen_assets.py)
 import math, os, wave
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ICON_DIR = os.path.join(ROOT, "icons")
@@ -14,6 +14,9 @@ S = 512
 def canvas():
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     return im, ImageDraw.Draw(im)
+
+from PIL import ImageChops
+def ImageChops_mul(a, b): return ImageChops.multiply(a, b)
 
 BADGE = {
     "transfer": (235, 130, 40), "setting": (90, 110, 170), "team": (50, 110, 245),
@@ -47,11 +50,22 @@ def badge(glyph, col):
     ImageDraw.Draw(gl).ellipse((cx - r * 0.78, cy - r * 0.92, cx + r * 0.78, cy - r * 0.1), fill=(255, 255, 255, 62))
     out.alpha_composite(gl)
     g = glyph.resize((int(S * 0.6), int(S * 0.6)), Image.LANCZOS)
+    ga = g.split()[3]
+    olc = tuple(int(v * 0.4) for v in col) + (255,)
+    og = Image.new("RGBA", g.size, olc)
+    og.putalpha(ga.filter(ImageFilter.MaxFilter(15)))
+    grad = np.zeros((g.size[1], g.size[0], 4), np.uint8)
+    grad[..., 0:3] = 255
+    grad[..., 3] = (np.linspace(110, 0, g.size[1])[:, None] * np.ones((1, g.size[0]))).astype(np.uint8)
+    gl2 = Image.fromarray(grad, "RGBA")
+    gl2.putalpha(ImageChops_mul(gl2.split()[3], ga))
+    g.alpha_composite(gl2)
     gs = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     gshadow = Image.new("RGBA", g.size, (0, 0, 0, 110))
     gshadow.putalpha(g.split()[3].point(lambda v: int(v * 0.45)))
     gs.alpha_composite(gshadow, (int(S * 0.2) + 6, int(S * 0.2) + 10))
     out.alpha_composite(gs)
+    out.alpha_composite(og, (int(S * 0.2), int(S * 0.2)))
     out.alpha_composite(g, (int(S * 0.2), int(S * 0.2)))
     return out
 
@@ -453,7 +467,7 @@ def sfx_crowd():
     x += 0.12 * np.sin(2 * np.pi * (230 + 8 * np.sin(2 * np.pi * t / n * 3)) * t) * (0.5 + 0.5 * np.sin(2 * np.pi * t / n * 3) ** 2)
     write_wav("crowd", x, 0.5)
 
-for fn in (sfx_crowd, music_menu, music_match, sfx_hit, sfx_pass, sfx_set, sfx_spike, sfx_whistle, sfx_point,
+for fn in (sfx_crowd, sfx_hit, sfx_pass, sfx_set, sfx_spike, sfx_whistle, sfx_point,
            sfx_lose, sfx_click, sfx_coin, sfx_card, sfx_win, sfx_cheer):
     fn()
 print("assets ok")

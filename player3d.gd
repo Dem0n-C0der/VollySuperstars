@@ -28,6 +28,7 @@ var jump_h := 0.0
 var jump_t := 0.0
 var jump_d := 0.0
 var moving := false
+var vel: Array = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 var cur: Array = [35.0, 35.0, 40.0, 40.0, 18.0, 18.0, -32.0, -32.0, -8.0, 0.0, 0.05]
 
 func _mat(c: Color) -> StandardMaterial3D:
@@ -267,9 +268,12 @@ func _process(delta: float) -> void:
 	if pose == "celebrate":
 		jy = maxf(jy, absf(sin(t * 7.0)) * 0.22)
 	var tg := _targets()
-	var k := 1.0 - exp(-16.0 * delta)
+	var dt := minf(delta, 0.033)
 	for i in 11:
-		cur[i] = lerpf(float(cur[i]), float(tg[i]), k)
+		var acc := (float(tg[i]) - float(cur[i])) * 240.0 - float(vel[i]) * 23.0
+		vel[i] = float(vel[i]) + acc * dt
+		cur[i] = float(cur[i]) + float(vel[i]) * dt
+	torso.scale = Vector3(1.0, 1.0 + 0.012 * sin(t * 2.6), 1.0)
 	sh_l.rotation.x = deg_to_rad(float(cur[0]))
 	sh_r.rotation.x = deg_to_rad(float(cur[1]))
 	el_l.rotation.x = deg_to_rad(float(cur[2]))

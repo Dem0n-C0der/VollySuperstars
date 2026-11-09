@@ -41,6 +41,8 @@ var sfx_pool: Array = []
 var sfx_i := 0
 var cache := {}
 var cur_music := ""
+var crumbs: Array = []
+var face_cache := {}
 
 const STARS := [
 	"Wilfredo Leon", "Earvin Ngapeth", "Yuki Ishikawa", "Ran Takahashi", "Yuji Nishida",
@@ -88,6 +90,7 @@ func _ready() -> void:
 	RAR_COL = {"Common": Color.html("#9aa3ad"), "Rare": Color.html("#3fa7ff"), "Epic": Color.html("#b05cff"),
 		"Star": Color.html("#ffc43a"), "Legend": Color.html("#ff4a4a")}
 	_gen_players()
+	_apply_face_meta()
 	_gen_teams()
 	load_game()
 	_setup_audio()
@@ -434,16 +437,53 @@ func _setup_audio() -> void:
 		add_child(p)
 		sfx_pool.append(p)
 
+func crumb(s: String) -> void:
+	crumbs.append(s)
+
+func _apply_face_meta() -> void:
+	var path := "res://data/faces.json"
+	var data = null
+	if FileAccess.file_exists(path):
+		var f := FileAccess.open(path, FileAccess.READ)
+		data = JSON.parse_string(f.get_as_text())
+		f.close()
+	elif ResourceLoader.exists(path):
+		var res = load(path)
+		if res != null:
+			data = res.data
+	if typeof(data) != TYPE_ARRAY:
+		return
+	for i in mini(data.size(), players.size()):
+		var d: Dictionary = data[i]
+		players[i]["sk"] = int(d["sk"])
+		players[i]["hs"] = int(d["hs"])
+		if players[i]["kind"] != "Legend":
+			players[i]["hc"] = int(d["hc"])
+
+func face(id: int):
+	if id < 0:
+		return null
+	if not face_cache.has(id):
+		var path := "res://faces/f_%d.png" % id
+		face_cache[id] = load(path) if ResourceLoader.exists(path) else null
+	return face_cache[id]
+
 func _snd(n: String):
 	if not cache.has(n):
-		var path := "res://audio/%s.wav" % n
-		cache[n] = load(path) if ResourceLoader.exists(path) else null
+		var found = null
+		for ext in ["mp3", "ogg", "wav"]:
+			var path := "res://audio/%s.%s" % [n, ext]
+			if ResourceLoader.exists(path):
+				found = load(path)
+				break
+		cache[n] = found
 	return cache[n]
 
 func play_music(n: String) -> void:
 	if cur_music == n and music.playing:
 		return
 	cur_music = n
+	music.stop()
 	music.stream = _snd(n)
 	apply_volume()
 	if music.stream != null:

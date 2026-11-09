@@ -42,26 +42,31 @@ func _draw() -> void:
 	# glow band
 	draw_rect(Rect2(w * 0.06, h * 0.05, w * 0.88, h * 0.5), col.darkened(0.25))
 	# face
-	var c := Vector2(w * 0.58, h * 0.33)
-	var r := w * 0.2
-	var skin: Color = G.SKIN[int(p["sk"])]
-	var hair: Color = G.HAIR[int(p["hc"])]
-	var hs := int(p["hs"])
-	# shoulders
-	draw_circle(c + Vector2(0, r * 2.1), r * 1.5, col.lightened(0.1))
-	if hs == 2:
-		draw_rect(Rect2(c.x - r * 1.1, c.y - r * 0.6, r * 2.2, r * 2.3), hair)
-	draw_circle(c + Vector2(0, -r * 0.25), r * 1.08, hair)
-	if hs == 1:
-		for k in 5:
-			var bx := c.x - r + float(k) * r * 0.5
-			draw_colored_polygon(PackedVector2Array([Vector2(bx - r * 0.25, c.y - r * 0.8), Vector2(bx, c.y - r * 1.75), Vector2(bx + r * 0.25, c.y - r * 0.8)]), hair)
-	draw_circle(c, r, skin)
-	if hs == 3:
-		draw_rect(Rect2(c.x - r * 1.05, c.y - r * 0.95, r * 2.1, r * 0.45), col.lightened(0.3))
-	draw_circle(c + Vector2(-r * 0.38, r * 0.05), r * 0.11, Color(0.1, 0.1, 0.15))
-	draw_circle(c + Vector2(r * 0.38, r * 0.05), r * 0.11, Color(0.1, 0.1, 0.15))
-	draw_arc(c + Vector2(0, r * 0.35), r * 0.3, 0.2, PI - 0.2, 10, Color(0.45, 0.15, 0.15), 2.0)
+	var tex = G.face(int(p["id"]))
+	if tex != null:
+		var fs := minf(w * 0.9, h * 0.52)
+		draw_texture_rect(tex, Rect2(w * 0.5 - fs * 0.5, h * 0.03, fs, fs), false)
+	else:
+		var c := Vector2(w * 0.58, h * 0.33)
+		var r := w * 0.2
+		var skin: Color = G.SKIN[int(p["sk"])]
+		var hair: Color = G.HAIR[int(p["hc"])]
+		var hs := int(p["hs"])
+		# shoulders
+		draw_circle(c + Vector2(0, r * 2.1), r * 1.5, col.lightened(0.1))
+		if hs == 2:
+			draw_rect(Rect2(c.x - r * 1.1, c.y - r * 0.6, r * 2.2, r * 2.3), hair)
+		draw_circle(c + Vector2(0, -r * 0.25), r * 1.08, hair)
+		if hs == 1:
+			for k in 5:
+				var bx := c.x - r + float(k) * r * 0.5
+				draw_colored_polygon(PackedVector2Array([Vector2(bx - r * 0.25, c.y - r * 0.8), Vector2(bx, c.y - r * 1.75), Vector2(bx + r * 0.25, c.y - r * 0.8)]), hair)
+		draw_circle(c, r, skin)
+		if hs == 3:
+			draw_rect(Rect2(c.x - r * 1.05, c.y - r * 0.95, r * 2.1, r * 0.45), col.lightened(0.3))
+		draw_circle(c + Vector2(-r * 0.38, r * 0.05), r * 0.11, Color(0.1, 0.1, 0.15))
+		draw_circle(c + Vector2(r * 0.38, r * 0.05), r * 0.11, Color(0.1, 0.1, 0.15))
+		draw_arc(c + Vector2(0, r * 0.35), r * 0.3, 0.2, PI - 0.2, 10, Color(0.45, 0.15, 0.15), 2.0)
 	# ovr / pos
 	var ov := G.ovr(p)
 	draw_string(font, Vector2(w * 0.07, h * 0.2), str(ov), HORIZONTAL_ALIGNMENT_LEFT, -1, int(h * 0.17), Color.WHITE)

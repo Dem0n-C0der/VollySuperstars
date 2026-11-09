@@ -13,7 +13,6 @@ const PACKS := [
 
 var ui: CanvasLayer
 var cur: Control = null
-var tut: Tut
 var popup: Control = null
 var sel = null
 var tr_tab := ""
@@ -30,16 +29,13 @@ func _ready() -> void:
 	RenderingServer.set_default_clear_color(Color.html("#0b1630"))
 	ui = CanvasLayer.new()
 	add_child(ui)
-	var tl := CanvasLayer.new()
-	tl.layer = 20
-	add_child(tl)
-	tut = Tut.new()
-	tl.add_child(tut)
 	G.apply_gfx(get_viewport())
 	go("create" if String(G.save["name"]) == "" else "menu")
 
 # ------------------------------------------------------------------ helpers
 func go(n: String) -> void:
+	if n == "menu" and not bool(G.save["tut"]):
+		n = "tutorial"
 	G.targets.clear()
 	close_popup()
 	if cur != null:
@@ -256,11 +252,19 @@ func _s_menu() -> void:
 	call_deferred("_after_menu")
 
 func _after_menu() -> void:
-	if not bool(G.save["tut"]):
-		if not G.tut_active:
-			tut.start()
-	elif popup == null:
+	if popup == null:
 		_check_daily()
+
+func _s_tutorial() -> void:
+	var scr = load("res://tutorial.gd")
+	if scr == null or not scr.can_instantiate():
+		G.save["tut"] = true
+		G.write()
+		go("menu")
+		return
+	var t = scr.new()
+	t.finished.connect(func(): go("menu"))
+	cur.add_child(t)
 
 func _check_daily() -> void:
 	var t := G.today()
@@ -958,7 +962,14 @@ func _s_tourmap() -> void:
 
 # ------------------------------------------------------------------ match
 func start_match(m: String, idx: int) -> void:
-	var g := Game.new()
+	G.crumbs.clear()
+	G.crumb("start_match %s %d" % [m, idx])
+	var scr = load("res://game.gd")
+	if scr == null or not scr.can_instantiate():
+		G.crumb("game.gd failed to compile")
+		_crash_popup()
+		return
+	var g = scr.new()
 	g.mode = m
 	g.level = idx
 	if m == "story":
@@ -969,14 +980,40 @@ func start_match(m: String, idx: int) -> void:
 		var o: Dictionary = G.save["tour"]["opps"][idx]
 		g.opp_name = String(o["name"])
 		g.opp_str = float(o["str"])
-	g.tut_mode = G.tut_active
 	G.targets.clear()
 	close_popup()
-	if cur != null:
-		cur.queue_free()
-	cur = g
+	var old := cur
 	ui.add_child(g)
+	if old != null:
+		old.visible = false
+	cur = g
 	g.exit.connect(_on_game_exit.bind(m, idx))
+	await get_tree().create_timer(1.2).timeout
+	if not is_instance_valid(g):
+		return
+	if int(g.alive) < 5:
+		G.crumb("FAILED alive=%d" % int(g.alive))
+		g.queue_free()
+		cur = old
+		if old != null and is_instance_valid(old):
+			old.visible = true
+		_crash_popup()
+		return
+	if old != null and is_instance_valid(old):
+		old.queue_free()
+
+func _crash_popup() -> void:
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 10)
+	v.add_child(G.mk_label("Match failed to start", 34, Color.html("#ff6a5a")))
+	var l := G.mk_label("Please send a screenshot of this to Claude:\n\n" + "\n".join(PackedStringArray(G.crumbs)), 20)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size = Vector2(720, 0)
+	v.add_child(l)
+	var ok := G.mk_btn("OK", Color.html("#4a5a8a"), Vector2(220, 60))
+	ok.pressed.connect(close_popup)
+	v.add_child(ok)
+	_modal(v)
 
 func _on_game_exit(won: bool, m: String, idx: int) -> void:
 	if m == "story":

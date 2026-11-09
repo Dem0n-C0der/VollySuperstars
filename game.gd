@@ -81,17 +81,24 @@ var power_bar: ProgressBar
 var court_tap: TapArea
 var aim_tap: TapArea
 var tbar: TimingBar
+var alive := 0
 
 func _ready() -> void:
+	G.crumb("ready: start")
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	G.play_music("bgm_match")
 	G.play_amb(true)
+	G.crumb("ready: audio ok")
 	_build_world()
+	G.crumb("ready: world ok")
 	_build_hud()
+	G.crumb("ready: hud ok")
 	_setup_teams()
+	G.crumb("ready: teams ok")
 	_hud()
 	st = "intro"
+	G.crumb("ready: done")
 
 func _exit_tree() -> void:
 	G.play_amb(false)
@@ -146,15 +153,20 @@ func _build_world() -> void:
 	cam.look_at_from_position(Vector3(-8.0, 17.0, 0.4), Vector3(0, 0, 0.4), Vector3(1, 0, 0))
 	cam.current = true
 	_box(world, Vector3(80, 0.2, 80), Vector3(0, -0.2, 0), Color.html("#0e1630"))
-	_box(world, Vector3(14.5, 0.05, 23), Vector3(0, -0.06, 0), Color.html("#2a6f97"))
-	_box(world, Vector3(9, 0.06, 18), Vector3(0, -0.03, 0), Color.html("#e07b39"))
-	var wc := Color(1, 1, 1)
-	for z in [-9.0, 9.0]:
-		_box(world, Vector3(9.1, 0.02, 0.1), Vector3(0, 0.01, z), wc)
-	for x in [-4.5, 4.5]:
-		_box(world, Vector3(0.1, 0.02, 18.0), Vector3(x, 0.01, 0), wc)
-	for z in [-3.0, 0.0, 3.0]:
-		_box(world, Vector3(9.0, 0.02, 0.08), Vector3(0, 0.01, z), wc)
+	var cp := MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(14.5, 23.0)
+	cp.mesh = pm
+	var cmat := StandardMaterial3D.new()
+	cmat.albedo_color = Color.html("#e07b39")
+	cmat.roughness = 0.45
+	if ResourceLoader.exists("res://tex/court.png"):
+		cmat.albedo_color = Color(1, 1, 1)
+		cmat.albedo_texture = load("res://tex/court.png")
+	cp.material_override = cmat
+	cp.position = Vector3(0, -0.01, 0)
+	world.add_child(cp)
+	G.crumb("world: court")
 	_box(world, Vector3(9.4, 0.95, 0.05), Vector3(0, 1.95, 0), Color(0.92, 0.92, 1.0, 0.5))
 	_box(world, Vector3(9.4, 0.09, 0.07), Vector3(0, 2.43, 0), Color(1, 1, 1))
 	for x in [-4.75, 4.75]:
@@ -180,9 +192,13 @@ func _build_world() -> void:
 		lb.position = Vector3(5.26, 0.5, z)
 		world.add_child(lb)
 	_build_stands()
+	G.crumb("world: stands")
 	_build_crowd()
+	G.crumb("world: crowd")
 	_build_refs()
+	G.crumb("world: refs")
 	_build_mascot()
+	G.crumb("world: mascot")
 	# ball
 	ball = Node3D.new()
 	world.add_child(ball)
@@ -759,6 +775,9 @@ func _process(delta: float) -> void:
 	t_all += delta
 	_update_buttons()
 	_update_visuals(delta)
+	alive += 1
+	if alive == 3:
+		G.crumb("process ok")
 	if sub_panel != null or ended:
 		return
 	st_t += delta
