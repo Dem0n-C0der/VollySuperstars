@@ -76,7 +76,7 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# legs
 	for sd in [-1.0, 1.0]:
-		var swing := sin(t * 5.2 + (0.0 if sd < 0.0 else PI)) * 0.2
+		var swing: float = sin(t * 5.2 + (0.0 if float(sd) < 0.0 else PI)) * 0.2
 		if jt >= 0.0:
 			swing = 0.35 * float(sd)
 		draw_set_transform(c + Vector2(float(sd) * 48.0 * sc, 118.0 * sc), swing, Vector2(s, s))

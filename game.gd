@@ -618,7 +618,7 @@ func _update_buttons() -> void:
 	var pulse := 0.85 + 0.15 * sin(t_all * 10.0)
 	for k in rel.keys():
 		var b: Button = rel[k]
-		var is_rel := (expect == k) or (expect == "set" and k == "dump" and dump_ok)
+		var is_rel: bool = (expect == k) or (expect == "set" and k == "dump" and dump_ok)
 		b.visible = true
 		if k == "dump" and not dump_ok and expect != "set":
 			b.modulate = Color(1, 1, 1, 0.18)

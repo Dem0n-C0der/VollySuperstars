@@ -472,7 +472,7 @@ func _snd(n: String):
 	if not cache.has(n):
 		var found = null
 		for ext in ["mp3", "ogg", "wav"]:
-			var path := "res://audio/%s.%s" % [n, ext]
+			var path: String = "res://audio/%s.%s" % [n, ext]
 			if ResourceLoader.exists(path):
 				found = load(path)
 				break

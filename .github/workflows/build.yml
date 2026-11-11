@@ -18,9 +18,9 @@ jobs:
       - name: Setup Godot + Android
         run: |
           mkdir -v -p ~/.local/share/godot/export_templates/ ~/.config/godot
-          mv /root/.local/share/godot/export_templates/4.2.2.stable ~/.local/share/godot/export_templates/4.2.2.stable
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/${GODOT_VERSION}.stable
           keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
-          cat > ~/.config/godot/editor_settings-4.tres <<SETTINGS_END
+          cat > ~/.config/godot/editor_settings-4.tres <<EOF
           [gd_resource type="EditorSettings" format=3]
           [resource]
           export/android/android_sdk_path = "/usr/lib/android-sdk"
@@ -30,7 +30,7 @@ jobs:
           export/android/debug_keystore_pass = "android"
           export/android/force_system_user = false
           export/android/shutdown_adb_on_exit = true
-          SETTINGS_END
+          EOF
 
       - name: Import assets
         run: godot --headless --verbose --import || true
